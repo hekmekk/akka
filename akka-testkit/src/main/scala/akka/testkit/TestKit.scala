@@ -8,12 +8,14 @@ import language.postfixOps
 import scala.annotation.tailrec
 import scala.collection.immutable
 import scala.concurrent.Await
+import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
 import java.util.concurrent._
 import java.util.concurrent.atomic.AtomicInteger
 
 import akka.actor._
+import akka.pattern.pipe
 import akka.util.{ BoxedType, Timeout }
 
 import scala.util.control.NonFatal
@@ -984,6 +986,13 @@ class TestProbe(_application: ActorSystem, name: String) extends TestKit(_applic
    */
   def reply(msg: Any): Unit = sender().!(msg)(ref)
 
+  /**
+   * Pipe a future to the sender of the last dequeued message.
+   */
+  def reply(future: Future[Any]): Unit = {
+    import _application.dispatcher
+    future.pipeTo(sender)(ref)
+  }
 }
 
 object TestProbe {

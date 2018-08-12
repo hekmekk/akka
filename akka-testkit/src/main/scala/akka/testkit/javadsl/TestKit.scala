@@ -4,15 +4,18 @@
 
 package akka.testkit.javadsl
 
+import java.util.concurrent.CompletableFuture
 import java.util.function.{ Supplier, Function ⇒ JFunction }
 import java.util.{ List ⇒ JList }
 
 import akka.actor._
+import akka.pattern.Patterns
 import akka.testkit.{ TestActor, TestDuration, TestProbe }
 import akka.util.JavaDurationConverters._
 
 import scala.annotation.varargs
 import scala.collection.JavaConverters._
+import scala.compat.java8.FutureConverters
 import scala.concurrent.duration._
 
 /**
@@ -102,6 +105,12 @@ class TestKit(system: ActorSystem) {
    * Send message to the sender of the last dequeued message.
    */
   def reply(msg: AnyRef): Unit = tp.lastSender.tell(msg, tp.ref)
+
+  /**
+   * Pipe a future to the sender of the last dequeued message.
+   */
+  def reply(future: CompletableFuture[AnyRef]): Unit =
+    Patterns.pipe(FutureConverters.toScala(future), tp.system.dispatcher).to(tp.lastSender)
 
   /**
    * Have the testActor watch someone (i.e. `context.watch(...)`).
